@@ -1,4 +1,6 @@
-<?php namespace App\Controller;
+<?php
+
+namespace App\Controller;
 
 use App\Application\CreateCommandeUseCase;
 use App\Application\UpdateAndPayCommandeUseCase;
@@ -15,7 +17,6 @@ class CommandeController extends AbstractController
     private CommandeRepository $commandeRepository;
     private VehicleRepository $vehicleRepository;
 
-    // Inject CreateCommandeUseCase into the controller constructor
     public function __construct(
         CommandeRepository $commandeRepository,
         VehicleRepository $vehicleRepository
@@ -24,31 +25,25 @@ class CommandeController extends AbstractController
         $this->vehicleRepository = $vehicleRepository;
     }
 
-    // Modified create method to use CreateCommandeUseCase
-    #[Route("/commande/create", name:"commande_create", methods:["GET"])]
+    #[Route("/commande/create", name:"commande_create", methods:["POST"])]
     public function create(Request $request, CreateCommandeUseCase $createCommandeUseCase): Response
     {
-    
-        $userId = $this->getUser()->getId(); // Get the authenticated user's ID
-        $assurance = false; // Assume the commande is not paid initially (can be changed based on form input)
-        $paymentMethod = ""; // You can change this if the form provides a payment date
+        $userId = $this->getUser()->getId();
+        $assurance = $request->get('assurance', false);
+        $paymentMethod = $request->get('payment_method', '');
 
         try {
-            // Call the use case to create the commande
             $commande = $createCommandeUseCase->execute($userId, $assurance, $paymentMethod);
-            
-            // After successful creation, redirect to the add reservation page
-            // Pass the newly created commande's ID to the next route
-            return $this->redirectToRoute('commande_add_reservation', ['id' => $commande->getId()]);
+            return $this->json([
+                'message' => 'Commande created successfully',
+                'commandeId' => $commande->getId()
+            ], Response::HTTP_CREATED);
         } catch (\Exception $e) {
-            $this->addFlash('error', 'Error creating commande: ' . $e->getMessage());
+            return $this->json(['error' => $e->getMessage()], Response::HTTP_BAD_REQUEST);
         }
-        
-
-        return $this->render('commande/create.html.twig');
     }
 
-    #[Route('/commande/{id}/add-reservation', name: 'commande_add_reservation', methods: ['GET', 'POST'])]
+    #[Route('/commande/{id}/add-reservation', name: 'commande_add_reservation', methods: ['POST'])]
     public function addReservation(int $id, Request $request, AddReservationToCommandeUseCase $addReservation): Response
     {
         $commande = $this->commandeRepository->find($id);
@@ -57,77 +52,61 @@ class CommandeController extends AbstractController
             return $this->json(['error' => 'Commande not found'], Response::HTTP_NOT_FOUND);
         }
 
-        // Fetch vehicles for the form
-        $vehicles = $this->vehicleRepository->findAll();
+        try {
+            $vehicleId = $request->get('vehicleId');
+            $startDate = new \DateTime($request->get('startDate'));
+            $endDate = new \DateTime($request->get('endDate'));
 
-        if ($request->getMethod() === 'POST') {
-            $vehicleId = $request->request->get('vehicleId');
-            $startDate = new \DateTime($request->request->get('startDate'));
-            $endDate = new \DateTime($request->request->get('endDate'));
+            $addReservation->execute($this->getUser()->getId(), $commande, $vehicleId, $startDate, $endDate);
 
-            try {
-                // Add reservation to the commande using the use case
-                $addReservation->execute($this->getUser()->getId(), $commande, $vehicleId, $startDate, $endDate);
-                return $this->redirectToRoute('commande_view', ['id' => $commande->getId()]);
-            } catch (\Exception $e) {
-                $this->addFlash('error', 'Error adding reservation: ' . $e->getMessage());
-            }
+            return $this->json(['message' => 'Reservation added successfully'], Response::HTTP_OK);
+        } catch (\Exception $e) {
+            return $this->json(['error' => $e->getMessage()], Response::HTTP_BAD_REQUEST);
         }
-
-        return $this->render('commande/add_reservation.html.twig', [
-            'commande' => $commande,
-            'vehicles' => $vehicles,
-        ]);
     }
 
-    #[Route('/commande/{id}', name: 'commande_view', methods: ['GET'])]
+    #[Route('/commande/{id}', name: 'commande_view', methods: ['GET'], requirements: ['id' => '\d+'])]
     public function view(int $id): Response
     {
         $commande = $this->commandeRepository->find($id);
-        $vehicles = $this->vehicleRepository->findAll(); // 👈 Fetch the vehicles
-
         if (!$commande) {
             return $this->json(['error' => 'Commande not found'], Response::HTTP_NOT_FOUND);
         }
 
-        return $this->render('commande/view.html.twig', [
-            'commande' => $commande,
-            'vehicles' => $vehicles
+        $reservations = [];
+        foreach ($commande->getReservations() as $res) {
+            $reservations[] = [
+                'vehicle' => $res->getVehicle()->getModel(),
+                'startDate' => $res->getStartDate()->format('Y-m-d'),
+                'endDate' => $res->getEndDate()->format('Y-m-d'),
+                'price' => $res->getTotalPrice()
+            ];
+        }
 
+        return $this->json([
+            'commandeId' => $commande->getId(),
+            'assurance' => $commande->hasAssurance(),
+            'paymentMethod' => $commande->getPaymentMethod(),
+            'reservations' => $reservations,
         ]);
     }
 
-    #[Route('/commande/{id}/checkout', name: 'commande_checkout', methods: ['GET', 'POST'])]
+    #[Route('/commande/{id}/checkout', name: 'commande_checkout', methods: ['POST'])]
     public function checkout(int $id, Request $request, UpdateAndPayCommandeUseCase $updateAndPayUseCase): Response
     {
         $commande = $this->commandeRepository->find($id);
         if (!$commande) {
-            throw $this->createNotFoundException('Commande not found');
+            return $this->json(['error' => 'Commande not found'], Response::HTTP_NOT_FOUND);
         }
-    
-        $total = 0;
-        foreach ($commande->getReservations() as $reservation) {
-            $total += $reservation->getTotalPrice();
-        }
-    
-        if ($request->isMethod('POST')) {
-            $assurance = $request->request->get('assurance') === 'on';
-            $paymentMethod = $request->request->get('payment_method');
-    
-            try {
-                $updateAndPayUseCase->execute($id, $commande, $assurance, $paymentMethod);
-                $this->addFlash('success', 'Commande paid successfully!');
-                return $this->redirectToRoute('commande_view', ['id' => $commande->getId()]);
-            } catch (\Exception $e) {
-                $this->addFlash('error', 'Error: ' . $e->getMessage());
-            }
-        }
-    
-        return $this->render('commande/checkout.html.twig', [
-            'commande' => $commande,
-            'total' => $total,
-        ]);
-    }
-    
 
+        $assurance = $request->get('assurance', false);
+        $paymentMethod = $request->get('payment_method');
+
+        try {
+            $updateAndPayUseCase->execute($id, $commande, $assurance, $paymentMethod);
+            return $this->json(['message' => 'Commande paid successfully'], Response::HTTP_OK);
+        } catch (\Exception $e) {
+            return $this->json(['error' => $e->getMessage()], Response::HTTP_BAD_REQUEST);
+        }
+    }
 }

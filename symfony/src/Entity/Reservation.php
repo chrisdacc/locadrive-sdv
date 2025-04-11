@@ -44,17 +44,6 @@ class Reservation
         return $this->id;
     }
 
-    public function getUserId(): ?int
-    {
-        return $this->userId;
-    }
-
-    public function setUserId(int $userId): static
-    {
-        $this->userId = $userId;
-        return $this;
-    }
-
     public function getVehicleId(): ?int
     {
         return $this->vehicleId;

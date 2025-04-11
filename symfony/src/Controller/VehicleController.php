@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Controller;
 
 use App\Application\CreateVehicleUseCase;
@@ -13,11 +14,11 @@ use Symfony\Component\Routing\Annotation\Route;
 
 class VehicleController extends AbstractController
 {
-    private $createVehicleUseCase;
-    private $listVehiclesUseCase;
-    private $getVehicleByIdUseCase;
-    private $deleteVehicleUseCase;
-    private $updateVehicleUseCase;
+    private CreateVehicleUseCase $createVehicleUseCase;
+    private ListVehiclesUseCase $listVehiclesUseCase;
+    private GetVehicleByIdUseCase $getVehicleByIdUseCase;
+    private DeleteVehicleUseCase $deleteVehicleUseCase;
+    private UpdateVehicleUseCase $updateVehicleUseCase;
 
     public function __construct(
         CreateVehicleUseCase $createVehicleUseCase,
@@ -33,98 +34,72 @@ class VehicleController extends AbstractController
         $this->updateVehicleUseCase = $updateVehicleUseCase;
     }
 
-    #[Route('/admin/create-vehicle', name: 'create_vehicle', methods: ['GET', 'POST'])]
+    #[Route('/api/vehicles', name: 'api_create_vehicle', methods: ['POST'])]
     public function createVehicle(Request $request): Response
     {
-        if ($request->getMethod() === 'POST') {
-            $model = $request->request->get('model');
-            $brand = $request->request->get('brand');
-            $price = (float)$request->request->get('dailyRate');
-            $user = $this->getUser();
+        $data = json_decode($request->getContent(), true);
+        $model = $data['model'] ?? null;
+        $brand = $data['brand'] ?? null;
+        $price = isset($data['dailyRate']) ? (float) $data['dailyRate'] : null;
 
-            if (!$model || !$brand || !$price) {
-                $this->addFlash("error", "Model, brand, and price must be provided.");
-                return $this->render('vehicle/create.html.twig');
-            }
-
-            try {
-                $this->createVehicleUseCase->execute($model, $brand, $price);
-                $this->addFlash("success", "Vehicle created.");
-            } catch (\Exception $e) {
-                $this->addFlash("error", $e->getMessage());
-            }
+        if (!$model || !$brand || !$price) {
+            return $this->json(['error' => 'Model, brand, and daily rate are required.'], Response::HTTP_BAD_REQUEST);
         }
 
-        return $this->render('vehicle/create.html.twig');
+        try {
+            $vehicle = $this->createVehicleUseCase->execute($model, $brand, $price);
+            return $this->json(['message' => 'Vehicle created', 'vehicle' => $vehicle], Response::HTTP_CREATED);
+        } catch (\Exception $e) {
+            return $this->json(['error' => $e->getMessage()], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
     }
 
-    #[Route('/list-vehicles', name: 'list_vehicles', methods: ['GET'])]
+    #[Route('/api/vehicles', name: 'api_list_vehicles', methods: ['GET'])]
     public function listVehicles(): Response
     {
         $vehicles = $this->listVehiclesUseCase->execute();
-
-        return $this->render('vehicle/list.html.twig', [
-            'vehicles' => $vehicles
-        ]);
+        return $this->json($vehicles);
     }
 
-    #[Route('/get-vehicle/{id}', name: 'get_vehicle_by_id', methods: ['GET'])]
+    #[Route('/api/vehicles/{id}', name: 'api_get_vehicle_by_id', methods: ['GET'])]
     public function getVehicleById(int $id): Response
     {
         try {
             $vehicle = $this->getVehicleByIdUseCase->execute($id);
+            return $this->json($vehicle);
         } catch (\Exception $e) {
-            return $this->render('404.html.twig');
+            return $this->json(['error' => 'Vehicle not found.'], Response::HTTP_NOT_FOUND);
         }
-
-        return $this->render('vehicle/show-vehicle.html.twig', [
-            'vehicle' => $vehicle
-        ]);
     }
 
-    #[Route('/admin/delete-vehicle/{id}', name: 'delete_vehicle', methods: ['POST'])]
+    #[Route('/api/vehicles/{id}', name: 'api_delete_vehicle', methods: ['DELETE'])]
     public function removeVehicle(int $id): Response
     {
         try {
             $this->deleteVehicleUseCase->execute($id);
+            return $this->json(['message' => 'Vehicle deleted']);
         } catch (\Exception $e) {
-            return $this->render('404.html.twig');
+            return $this->json(['error' => 'Vehicle not found.'], Response::HTTP_NOT_FOUND);
         }
-
-        $this->addFlash("success", "Vehicle deleted.");
-        return $this->redirectToRoute('list_vehicles');
     }
 
-    #[Route('/admin/update-vehicle/{id}', name: 'update_vehicle', methods: ['GET', 'POST'])]
+    #[Route('/api/vehicles/{id}', name: 'api_update_vehicle', methods: ['PUT'])]
     public function updateVehicle(int $id, Request $request): Response
     {
-        if ($request->getMethod() === 'POST') {
-            $model = $request->request->get('model');
-            $brand = $request->request->get('brand');
-            $price = (float)$request->request->get('dailyRate');
+        $data = json_decode($request->getContent(), true);
+        $model = $data['model'] ?? null;
+        $brand = $data['brand'] ?? null;
+        $price = isset($data['dailyRate']) ? (float) $data['dailyRate'] : null;
 
-            if (!$model || !$brand || !$price) {
-                $this->addFlash("error", "Model, brand, and price must be provided.");
-            }
-
-            try {
-                $this->updateVehicleUseCase->execute($id, $model, $brand, $price);
-                $this->addFlash("success", "Vehicle updated.");
-
-                return $this->redirectToRoute('list_vehicles');
-            } catch (\Exception $e) {
-                $this->addFlash("error", $e->getMessage());
-            }
+        if (!$model || !$brand || !$price) {
+            return $this->json(['error' => 'Model, brand, and daily rate are required.'], Response::HTTP_BAD_REQUEST);
         }
 
         try {
-            $vehicle = $this->getVehicleByIdUseCase->execute($id);
+            $vehicle = $this->updateVehicleUseCase->execute($id, $model, $brand, $price);
+            return $this->json(['message' => 'Vehicle updated', 'vehicle' => $vehicle]);
         } catch (\Exception $e) {
-            return $this->render('404.html.twig');
+            return $this->json(['error' => $e->getMessage()], Response::HTTP_NOT_FOUND);
         }
-
-        return $this->render('vehicle/update-vehicle.html.twig', [
-            'vehicle' => $vehicle
-        ]);
     }
 }

@@ -14,7 +14,7 @@ class CreateVehicleUseCase
         $this->entityManager = $entityManager;
     }
 
-    public function execute(string $model, string $brand, float $dailyRate): void
+    public function execute(string $model, string $brand, float $dailyRate): Vehicle
     {
         try {
             $vehicle = new Vehicle($model, $brand,  $dailyRate);
@@ -25,6 +25,7 @@ class CreateVehicleUseCase
         try {
             $this->entityManager->persist($vehicle);
             $this->entityManager->flush();
+            return $vehicle;
         } catch (\Exception $exception) {
             throw new \Exception("Cannot create vehicle. Please try again later.");
         }

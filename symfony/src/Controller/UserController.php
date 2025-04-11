@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Controller;
 
 use App\Application\CreateUserUseCase;
@@ -9,27 +10,35 @@ use Symfony\Component\Routing\Annotation\Route;
 
 class UserController extends AbstractController
 {
-    private $createUserUseCase;
+    private CreateUserUseCase $createUserUseCase;
 
     public function __construct(CreateUserUseCase $createUserUseCase) {
         $this->createUserUseCase = $createUserUseCase;
     }
 
-    #[Route("/register", name: "register", methods: ["POST", "GET"])]
+    #[Route("/api/register", name: "api_register", methods: ["POST"])]
     public function createUser(Request $request): Response {
-        if($request->getMethod() === "POST") {
-            $email = $request->request->get("email");
-            $password = $request->request->get("password");
-            $role = "ROLE_USER";
+        $email = $request->get('email');
+        $password = $request->get('password');
+        $role = "ROLE_USER";
 
-            try {
-                $this->createUserUseCase->execute($email, $password, $role);
-                $this->addFlash("success", "User has been created successfully.");
-            } catch (\Exception $exception) {
-                $this->addFlash("error", $exception->getMessage());
-            }
+        if (!$email || !$password) {
+            return $this->json([
+                'error' => 'Email and password are required.'
+            ], Response::HTTP_BAD_REQUEST);
         }
 
-        return $this->render('user/create.html.twig');
+        try {
+            $this->createUserUseCase->execute($email, $password, $role);
+
+            return $this->json([
+                'message' => 'User created successfully.',
+                'email' => $email
+            ], Response::HTTP_CREATED);
+        } catch (\Exception $exception) {
+            return $this->json([
+                'error' => $exception->getMessage()
+            ], Response::HTTP_BAD_REQUEST);
+        }
     }
 }

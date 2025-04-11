@@ -18,6 +18,7 @@ class UpdateAndPayCommandeUseCase
 
     public function execute(int $id, Commande $commande, bool $assurance, string $paymentMethod): void
     {
+        
         $total = 0;
         $commande = $this->entityManager->getRepository(Commande::class)->find($id);
 

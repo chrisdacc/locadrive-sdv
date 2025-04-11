@@ -13,7 +13,7 @@ class UpdateVehicleUseCase
         $this->entityManager = $entityManager;
     }
 
-    public function execute(int $id, string $model, string $brand, float $dailyRate): void
+    public function execute(int $id, string $model, string $brand, float $dailyRate): Vehicle
     {
         $vehicle = $this->entityManager->getRepository(Vehicle::class)->find($id);
 
@@ -27,6 +27,7 @@ class UpdateVehicleUseCase
             $vehicle->setDailyRate($dailyRate);
 
             $this->entityManager->flush();
+            return $vehicle;
         } catch (\Exception $e) {
             throw new \Exception("Cannot update vehicle. Please try again later.");
         }

@@ -44,7 +44,7 @@ class AddReservationToCommandeUseCase
             $vehicleId,
             $startDate,
             $endDate,
-            $vehicle->getDailyRate(),
+            $vehicle-> getDailyRate()* $startDate->diff($endDate)->days,
             $commande
         );
 
