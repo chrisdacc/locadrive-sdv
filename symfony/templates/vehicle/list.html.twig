@@ -1,0 +1,25 @@
+{% extends 'base.html.twig' %}
+
+{% block main %}
+<h1>Liste des véhicules :</h1>
+
+{% for vehicle in vehicles %}
+
+    <article>
+        <p>Marque : {{ vehicle.brand }}</p>
+        <p>Modèle : {{ vehicle.model }}</p>
+        <p>Tarif journalier : {{ vehicle.dailyRate }} €</p>
+
+        <a href="{{ path('get_vehicle_by_id', {'id': vehicle.id}) }}">Voir le détail du véhicule</a>
+        {% if app.user != null and "ROLE_ADMIN" in app.user.getRoles() %}
+            <a href="{{ path('update_vehicle', {'id': vehicle.id}) }}">Mettre à jour le véhicule</a>
+            <form method="POST" action="{{ path('delete_vehicle', {'id': vehicle.id}) }}">
+                <button type="submit">Supprimer</button>
+            </form>
+        {% endif %}
+        
+    </article>
+
+{% endfor %}
+
+{% endblock %}

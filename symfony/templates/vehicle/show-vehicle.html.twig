@@ -1,0 +1,15 @@
+{% extends 'base.html.twig' %}
+
+{% block main %}
+
+<h1>Véhicule : {{ vehicle.id }}</h1>
+
+<p>Marque : {{ vehicle.brand }}</p>
+<p>Modèle : {{ vehicle.model }}</p>
+<p>Tarif journalier : {{ vehicle.dailyRate }} €</p>
+{% if app.user != null and "ROLE_ADMIN" in app.user.getRoles() %}
+<a href="{{ path('update_vehicle', {'id': vehicle.id}) }}">Modifier</a>
+{% endif %}
+
+
+{% endblock %}

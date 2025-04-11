@@ -1,0 +1,19 @@
+{% extends 'base.html.twig' %}
+
+{% block main %}
+<form method="POST">
+    <label>Marque (Brand)
+        <input type="text" name="brand" required>
+    </label>
+
+    <label>Modèle (Model)
+        <input type="text" name="model" required>
+    </label>
+
+    <label>Tarif journalier (€)
+        <input type="number" step="0.01" name="dailyRate" required>
+    </label>
+
+    <button type="submit">Créer le véhicule</button>
+</form>
+{% endblock %}

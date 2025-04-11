@@ -1,0 +1,24 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Commande Details{% endblock %}
+
+{% block main %}
+    <h1>Commande #{{ commande.id }} Details</h1>
+
+    <p>Status: {{ commande.statut }}</p>
+
+    <h3>Reservations</h3>
+    <ul>
+        {% for reservation in commande.reservations %}
+            <li>
+                Vehicle: {{ reservation.vehicleId }} - 
+                Start: {{ reservation.getStartDate()|date('Y-m-d H:i') }} - 
+                End: {{ reservation.getEndDate()|date('Y-m-d H:i') }} - 
+                Price: {{ reservation.getTotalPrice() }} 
+            </li>
+        {% else %}
+            <li>No reservations added yet.</li>
+        {% endfor %}
+    </ul>
+
+{% endblock %}

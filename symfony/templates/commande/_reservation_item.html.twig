@@ -1,0 +1,9 @@
+<li>
+    Vehicle: {{ reservation.vehicle.name }} - 
+    Start: {{ reservation.startDate|date('Y-m-d H:i') }} - 
+    End: {{ reservation.endDate|date('Y-m-d H:i') }} - 
+    Price: {{ reservation.price }} 
+    <form action="{{ path('commande_remove_reservation', {id: commande.id, reservationId: reservation.id}) }}" method="post" style="display:inline;">
+        <button type="submit">Remove</button>
+    </form>
+</li>

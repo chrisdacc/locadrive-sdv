@@ -1,0 +1,10 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Reservation Added{% endblock %}
+
+{% block body %}
+    <h1>Reservation Successfully Added!</h1>
+
+    <p>Your reservation has been successfully added to the commande #{{ commande.id }}.</p>
+    <a href="{{ path('commande_view', {id: commande.id}) }}">Back to Commande</a>
+{% endblock %}

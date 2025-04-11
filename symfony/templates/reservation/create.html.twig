@@ -1,0 +1,35 @@
+{% extends 'base.html.twig' %}
+
+{% block main %}
+<form method="POST">
+    <label> Véhicule
+        <select name="vehicle_id" required>
+            <option value="" disabled selected>-- Choisir une voiture --</option>
+            {% for vehicle in vehicles %}
+                <option value="{{ vehicle.id }}">{{ vehicle.brand }} - {{ vehicle.model }}</option>
+            {% endfor %}
+        </select>
+    </label>
+
+    <label> Date de début
+        <input type="date" name="start_date">
+    </label>
+
+    <label> Date de fin
+        <input type="date" name="end_date">
+    </label>
+    {% if "ROLE_ADMIN" in app.user.getRoles()  %}
+    <label>Client
+        <select name="user_id" required>
+            <option value="" disabled selected>-- Choisir un client --</option>
+            {% for user in users %}
+                <option value="{{ user.id }}">{{ user.email }}</option>
+            {% endfor %}
+        </select>
+    </label>
+    {% endif %}
+
+
+    <button type="submit">Créer la réservation</button>
+</form>
+{% endblock %}

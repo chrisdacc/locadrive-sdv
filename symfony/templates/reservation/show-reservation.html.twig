@@ -1,0 +1,15 @@
+{% extends 'base.html.twig' %}
+
+{% block main %}
+
+<h1>Facture : {{ reservation.id }}</h1>
+
+<p>Vehicle : {{ reservation.vehicleId }}</p>
+<p>Start Date : {{ reservation.startDate | date('y-m-d') }}</p>
+<p>End Date : {{ reservation.endDate | date('y-m-d')  }}</p>
+<p>Client : {{ reservation.userId }}</p>
+
+<p>Total price : {{ reservation.totalPrice }}</p>
+
+
+{% endblock %}

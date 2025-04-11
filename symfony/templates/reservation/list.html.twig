@@ -1,0 +1,35 @@
+{% extends 'base.html.twig' %}
+
+{% block main %}
+<h1>Liste des réservations : </h1>
+
+{% for reservation in reservations %}
+
+    <article>
+
+        <p>Véhicule : {% for vehicle in vehicles %}
+                        {% if vehicle.id == reservation.vehicleId %}
+                            {{ vehicle.brand }} - {{ vehicle.model }}
+                        {% endif %}
+                    {% endfor %}
+        </p>
+        <p>Date de début : {{ reservation.startDate | date('y-m-d') }}</p>
+        <p>Date de fin : {{ reservation.endDate | date('y-m-d') }}</p>
+
+
+        <p>Prix : {{ reservation.totalPrice }}</p>
+
+        <a href="{{ path('get_reservation_by_id', {'id' : reservation.id}) }}">Voir le détail de la réservation</a>
+
+        <a href="{{ path('update_reservation', {'id' : reservation.id}) }}">Mettre à jour la réservation</a>
+
+        <form method="POST" action="{{ path('delete_reservation', {'id': reservation.id}) }}">
+            <button type="submit">Supprimer</button>
+        </form>
+
+
+
+    </article>
+{% endfor %}
+
+{% endblock %}

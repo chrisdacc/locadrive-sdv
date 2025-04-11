@@ -1,0 +1,25 @@
+{% extends 'base.html.twig' %}
+
+{% block main %}
+
+<h1>Mettre à jour le véhicule</h1>
+
+<form method="POST">
+
+    <label> Marque
+        <input type="text" name="brand" value="{{ vehicle.brand }}" required>
+    </label>
+
+    <label> Modèle
+        <input type="text" name="model" value="{{ vehicle.model }}" required>
+    </label>
+
+    <label> Prix par jour
+        <input type="number" name="dailyRate" step="0.01" value="{{ vehicle.dailyRate }}" required>
+    </label>
+
+    <button type="submit">Mettre à jour le véhicule</button>
+
+</form>
+
+{% endblock %}

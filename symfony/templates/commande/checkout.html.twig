@@ -1,0 +1,34 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Checkout{% endblock %}
+
+{% block main %}
+<h1>Checkout for Commande #{{ commande.id }}</h1>
+
+<h2>Reservations:</h2>
+<ul>
+    {% for reservation in commande.reservations %}
+        <li>
+            Vehicle #{{ reservation.vehicleId }}:
+            From {{ reservation.getStartDate()|date('Y-m-d') }} to {{ reservation.getEndDate()|date('Y-m-d') }} —
+            €{{ reservation.getTotalPrice() }}
+        </li>
+    {% endfor %}
+</ul>
+
+<p><strong>Subtotal:</strong> €{{ total }}</p>
+
+<form method="POST">
+    <label>
+        <input type="checkbox" name="assurance"> Add Insurance (+€20)
+    </label><br><br>
+
+    <label for="payment_method">Payment Method:</label>
+    <select name="payment_method" id="payment_method" required>
+        <option value="Card">Card</option>
+        <option value="Paypal">PayPal</option>
+    </select><br><br>
+
+    <button type="submit">Pay</button>
+</form>
+{% endblock %}

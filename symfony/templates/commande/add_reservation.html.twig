@@ -1,0 +1,34 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Add Reservation{% endblock %}
+
+{% block main %}
+    <h1>Add Reservation for Commande #{{ commande.id }}</h1>
+
+    <form method="POST">
+        <div>
+            <label for="vehicleId">Vehicle</label>
+            <select id="vehicleId" name="vehicleId">
+                {% for vehicle in vehicles %}
+                    <option value="{{ vehicle.id }}">{{ vehicle.model }} - {{ vehicle.brand }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div>
+            <label for="startDate">Start Date</label>
+            <input type="date" id="startDate" name="startDate" required>
+        </div>
+
+        <div>
+            <label for="endDate">End Date</label>
+            <input type="date" id="endDate" name="endDate" required>
+        </div>
+
+        <button type="submit">Add Reservation</button>
+        <a href="{{ path('commande_checkout', { id: commande.id }) }}">
+            <button type="button">Proceed to Checkout</button>
+        </a>
+
+    </form>
+{% endblock %}

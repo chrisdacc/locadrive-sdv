@@ -1,0 +1,16 @@
+<form action="{{ path('commande_add_reservation', {id: commande.id}) }}" method="post">
+    <label for="vehicleId">Vehicle:</label>
+    <select name="vehicleId" id="vehicleId" required>
+        {% for vehicle in vehicles %}
+            <option value="{{ vehicle.id }}">{{ vehicle.name }}</option>
+        {% endfor %}
+    </select>
+
+    <label for="startDate">Start Date:</label>
+    <input type="datetime-local" name="startDate" id="startDate" required>
+
+    <label for="endDate">End Date:</label>
+    <input type="datetime-local" name="endDate" id="endDate" required>
+
+    <button type="submit">Add Reservation</button>
+</form>
